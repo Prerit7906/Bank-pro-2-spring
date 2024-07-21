@@ -3,7 +3,7 @@ package com.prerit.bank_pro_2;
 public interface Modules {
 	void createAccount(Account account);
 
-	void showBalance(long accountNumber, int pin);
+	void showBalance(long accountNumber, int pin, boolean isCalledAfterTransaction);
 
 	boolean depositAmount(long accountNumber, double amountToBeDeposited, int pin, boolean isCalledFromFundTransfer);
 

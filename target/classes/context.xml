@@ -9,14 +9,14 @@
     http://www.springframework.org/schema/context/spring-context.xsd">
     
     <bean class="org.springframework.jdbc.datasource.DriverManagerDataSource" id="dataSource">
-    <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"></property>
-    <property name="url" value="jdbc:mysql://localhost:3306/bankproject"></property>
-    <property name="username" value="root"></property>
-    <property name="password" value="Root123$"></property>
+    <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+    <property name="url" value="jdbc:mysql://localhost:3306/bankproject"/>
+    <property name="username" value="root"/>
+    <property name="password" value="Prerit@1234"/>
     </bean>
     
    
-	<context:annotation-config></context:annotation-config>
+	<context:annotation-config/>
 	<context:component-scan
-		base-package="com.prerit.bank_pro_2"></context:component-scan>
+		base-package="com.prerit.bank_pro_2"/>
 </beans>

@@ -23,7 +23,7 @@ public class AccountJdbcDao implements Modules {
 
 	@Override
 	public void createAccount(Account account) {
-		if (getAccountsUsingAccountHolderAndPhoneNumber(account).size() != 0) {
+		if (!getAccountsUsingAccountHolderAndPhoneNumber(account).isEmpty()) {
 			System.out.println("This user is already registered, Please try again!!");
 			return;
 		}
@@ -38,7 +38,7 @@ public class AccountJdbcDao implements Modules {
 	}
 
 	@Override
-	public void showBalance(long accountNumber, int pin) {
+	public void showBalance(long accountNumber, int pin, boolean isCalledAfterTransaction) {
 		if (!checkIsUserValid(accountNumber, pin)) {
 			System.out.println("Invalid credentials, Please try again!!");
 			return;
@@ -46,23 +46,43 @@ public class AccountJdbcDao implements Modules {
 		query = "select balance from Account where accountNumber=?";
 		List<Account> account = jdbcTemplate.query(query, new BeanPropertyRowMapper<Account>(Account.class),
 				accountNumber);
-		System.out.println("The balance is : " + account.get(0).getBalance());
-
+		if(isCalledAfterTransaction)
+			System.out.print("The balance is : " + account.get(0).getBalance()+", ");
+		else
+			System.out.println("The balance is : " + account.get(0).getBalance());
 	}
 
 	@Override
 	public boolean depositAmount(long accountNumber, double amountToBeDeposited, int pin,
 			boolean isCalledFromFundTransfer) {
-		if (!isCalledFromFundTransfer && !checkIsUserValid(accountNumber, pin)) {
-			System.out.println("Invalid credentials, Please try again!!");
-			return false;
-		}
+		if (!isCalledFromFundTransfer){
+			if (!checkIsUserValid(accountNumber, pin)) {
+				System.out.println("Invalid credentials, Please try again!!");
+				return false;
+			}
 
+		}
+		else if(!isAccountPresent(accountNumber)){
+				System.out.println("Receiver's account is not present in the database, Please check the account number!!");
+				return false;
+		}
 		query = "update Account set balance=balance+? where accountNumber=?";
 		int response = jdbcTemplate.update(query, amountToBeDeposited, accountNumber);
 		query = "insert into Transaction (accountNumber,amount, transactionType) values (?,?,'DEPOSIT')";
 		int response1 = jdbcTemplate.update(query, accountNumber, amountToBeDeposited);
 		if (response1 > 0 && response > 0) {
+			if(!isCalledFromFundTransfer)
+			showBalance(accountNumber, pin,true);
+			return true;
+		}
+		return false;
+	}
+
+	private boolean isAccountPresent(long accountNumber) {
+		query = "select * from Account where accountNumber=?";
+		List<Account> account = jdbcTemplate.query(query, new BeanPropertyRowMapper<Account>(Account.class),
+				accountNumber);
+		if (!account.isEmpty()) {
 			return true;
 		}
 		return false;
@@ -83,11 +103,13 @@ public class AccountJdbcDao implements Modules {
 		query = "insert into Transaction (accountNumber,amount, transactionType) values (?,?,'WITHDRAW')";
 		int response1 = jdbcTemplate.update(query, accountNumber, amountToBeWithdrawn);
 		if (response1 > 0 && response > 0) {
+			showBalance(accountNumber, pin,true);
 			return true;
 		}
 		return false;
 
 	}
+
 
 	@Override
 	public void fundTransfer(long accountNumberOfSender, long accountNumberOfReceiver, double amount, int pin) {
@@ -129,11 +151,11 @@ public class AccountJdbcDao implements Modules {
 
 	}
 
-	private boolean checkIsUserValid(long accountNumber, int pin) {
+	public boolean checkIsUserValid(long accountNumber, int pin) {
 		query = "select * from Account where accountNumber=? and pinNumber= ?";
 		List<Account> account = jdbcTemplate.query(query, new BeanPropertyRowMapper<Account>(Account.class),
 				accountNumber, pin);
-		if (account.size() != 0) {
+		if (!account.isEmpty()) {
 			return true;
 		}
 		return false;
@@ -143,7 +165,7 @@ public class AccountJdbcDao implements Modules {
 		query = "select balance from Account where accountNumber=? and balance>=?";
 		List<Account> account = jdbcTemplate.query(query, new BeanPropertyRowMapper<Account>(Account.class),
 				accountNumber, amountToBeWithdrawn);
-		if (account.size() != 0) {
+		if (!account.isEmpty()) {
 			return true;
 		}
 		return false;
